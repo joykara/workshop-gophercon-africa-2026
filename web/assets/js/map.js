@@ -54,6 +54,7 @@
 			markerZoomAnimation: !still,
 			worldCopyJump: true,
 		});
+		el._leafletInstance = map;
 		L.tileLayer(el.dataset.tiles || TILES, {
 			attribution: el.dataset.attribution || CREDIT,
 			maxZoom: 18,
