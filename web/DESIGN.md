@@ -1,52 +1,79 @@
-# Design — Night Sightings
+# Design — In the Wild
 
-Dark, field-notebook feel: photos glow against a near-black background with
-sand-coloured type and warm ochre accents. "Savannah at night."
+Cinematic, cool-futuristic-with-nature. Dark burgundy base with warm sunset
+glows and a cool periwinkle counterpoint — built from the two Dribbble refs
+("Waterfall from Heaven" cool-warm diptych and "Wildlife Landing" burgundy +
+sunset). Dark is default, with a light theme that flips to cream + plum.
+
+Theme is remembered in `localStorage` and set on `<html data-theme>` before
+paint, so there's no flash.
 
 ## Tokens
 
-Set as CSS custom properties on `:root` in `web/assets/css/app.css`.
+Both themes live in `web/assets/css/app.css`. Pick a token, not a hex, when
+writing styles — the toggle swaps both palettes under the same names.
 
-| Token | Value | Where it's used |
-|-------|-------|-----------------|
-| `--ink` | `#1A1612` | Page background, scrim bottom |
-| `--ink-raised` | `#26211B` | Cards, stat tiles, chart cards, muted sections |
-| `--sand` | `#F2E8D5` | Body text, headings |
-| `--sand-dim` | `#BFB29A` | Secondary text, labels, nav links |
-| `--ochre` | `#D4932C` | Primary accent, chart bars, map markers, section eyebrows |
-| `--ochre-bright` | `#E8A33D` | Links, hover, active pagination bullet |
-| `--acacia` | `#6B8E4E` | Reserved secondary accent (unused for now) |
-| `--acacia-deep` | `#2D4A2B` | Reserved deep accent |
-| `--border` | `#3A332A` | Hairlines around raised surfaces |
+| Token | Dark | Light | Role |
+|-------|------|-------|------|
+| `--bg` | `#241217` | `#F2EBDC` | Page background |
+| `--bg-raised` | `#3A2024` | `#EBE1D0` | Cards, tiles |
+| `--bg-sunk` | `#1C0D10` | `#E6DBC5` | Hero backdrop, sunk sections |
+| `--text` | `#F0E6D6` | `#241217` | Body text, headings |
+| `--text-dim` | `#B9A99A` | `#6E4B4F` | Labels, secondary text |
+| `--sunset` | `#F0A858` | `#E89B2E` | Primary accent, chart bars, map markers |
+| `--sunset-bright` | `#FFC077` | `#CA7D13` | Hover, bright highlights |
+| `--periwinkle` | `#8599D6` | `#5A6DB5` | Cool secondary accent (globe, lines) |
+| `--header-bg` | `#F5EEDE` | `#241217` | Header strip (always inverts the page) |
+| `--header-text` | `#241217` | `#F0E6D6` | Header text and nav |
+
+Header is intentionally always the opposite of the page body — light bar
+on dark theme, dark bar on light. It frames the content like a wildlife
+poster.
 
 ## Typography
 
-- **Headings:** Fraunces, 500 for section titles, 700 for the hero. Italic 500 for the latin names. Loaded from Google Fonts.
-- **Body:** Inter 400 / 500 / 600.
-- Fluid sizes with `clamp()`: hero up to ~4rem, h2 up to ~2.1rem, body 16px/1.6.
+- **Headings:** Fraunces — editorial, slightly italic for scientific names.
+- **Body:** Josefin Sans — soft geometric, airy; 300–700 loaded.
+- Hero titles use `clamp(2.8rem, 7vw, 5.2rem)` with a tight 1.02 line-height.
 
-## Spacing and shape
+## Page map
 
-- Page gutter `--page-gutter: 28px`, max width `--page-max: 72rem`.
-- Section vertical rhythm: `72px` top/bottom, `56px` on narrow screens.
-- Card radius `--radius-lg: 18px`, stat/chart cards the same.
-- Border on every raised surface: `1px solid var(--border)`.
+| Route | Page | Purpose |
+|-------|------|---------|
+| `/` | `pages.Home` | Hero carousel, slim stats strip, animals preview, globe/map toggle, gallery preview, charts |
+| `/animals` | `pages.Animals` | Every photographed species as a tile, ranked by count |
+| `/gallery` | `pages.Gallery` | Full masonry grid; click opens lightbox with "Open sighting" button |
+| `/sightings/{id}` | `pages.Sighting` | One sighting: hero photo, prose + facts panel, related sightings from the same country |
+| anything else | `pages.NotFound` | Themed 404 with links back |
 
-## Components
+The home nav highlights the current page via `aria-current="page"` on a sunset
+underline. `BaseProps.Current` is `"home" / "animals" / "gallery" / "sighting" / "404"`.
 
-- **Hero carousel** (`components/Hero`): one slide fills the viewport (clamped 460–720px), background image dimmed to 55% and tinted with a two-stop ink scrim, title + latin + one-line summary + "N sightings, seen in …". Prev/next arrows are circular, 48px, ochre on hover. Pagination is slim bars at the bottom. Autoplay runs on a 5s cycle and pauses on hover; disabled when `prefers-reduced-motion: reduce`.
-- **Stats row** (`.stats`): auto-fit grid, 180px minimum. Each tile shows a label (uppercase, dim) and a big Fraunces number.
-- **Charts** (`components/Bars`, `components/Sparkline`): plain markup from the charts block, tinted via `--chart-bar` and `--chart-track`.
-- **Map** (`components/Map`): Leaflet, clustered markers, `map--dark` class to invert the tiles. `--map-marker` and `--map-marker-stroke` take the palette.
-- **Sightings grid** (`.sightings`): auto-fill, 320px minimum. Card has a 4/3 cover photo, title in Fraunces, dim uppercase meta labels, warm sand values. Hover lifts 3px and brightens the border to ochre.
+## Key components
+
+- **Hero carousel** (`components/Hero`) — Swiper, 1 slide at a time, auto-advance (5s, pauses on hover, disabled under reduced motion), prev/next circular buttons, slim bullet pagination. Photos take a gentle 0.78 brightness + a two-stop ink scrim — enough mood, not a wash.
+- **Stats strip** (`.stats-strip`) — single horizontal line of totals under the hero, bordered top & bottom, ochre dots as separators.
+- **Animal tile** (`.animal-tile`) — portrait 4:5 photo, caption fades out of a bottom scrim, hover lifts and brightens the border to sunset.
+- **Globe / Map** (`components/ThreeScene` + `components/Map` in a `.geo` wrapper) — a floating pill-shaped tab toggle sits top-left over the view. Globe uses `web/assets/js/scenes/globe.js`: dark matte sphere, faint wireframe shell for the "futuristic grid" feel, periwinkle halo, sunset points per sighting. Rotates slowly, parallax on pointer, respects reduced motion.
+- **Gallery masonry** (`.gallery-mason`) — CSS columns (1→4 depending on width), varied heights, `data-lightbox` opens the dialog; `data-sighting` is read by `lightbox.js` to show "Open sighting →".
+- **Charts** (`components/Bars`, `components/Sparkline`) — unchanged plain markup, tinted with `--chart-bar` and `--chart-track`.
+- **Sighting detail** (`.detail-hero` + `.detail-body` + `.related-strip`) — big hero photo with scrim and title, 2fr/1fr prose + facts grid, related photos from the same country below.
+
+## Blocks installed
+
+- `favicon` (SVG mark)
+- `swiper` (via hero only — the standard swiper row isn't on any page)
+- `charts`, `map`, `lightbox`, `reveal`, `transitions`, `threejs`
 
 ## Avoid
 
-- Pure black (`#000`) backgrounds — use `--ink` so the shadow of real black can still read.
-- Any inline style built from GBIF data (URLs, text). Images always go through `templ.URL`.
-- Over-animating. Autoplay on the hero only; everything else is static or hover-only.
+- Inline styles built from GBIF text (URLs, captions). URLs go through `templ.URL`; captions through `textContent`.
+- A canvas per card — the globe is one `THREE.Points` for every point.
+- Overriding theme colours with hard-coded hexes — use the tokens, so the toggle keeps working.
+- Decorative emoji; use SVGs (the sun icon on the theme toggle is inline).
 
-## Future sessions
+## Future
 
-If you add a page, extend `layout.BaseProps` (e.g. a `Description`) rather
-than making a new layout. Keep the header, nav and footer in one place.
+When adding a page, give it a `Current` string, hang it off `web.New`, and
+add a nav link in `layout.templ`. Keep the header, nav, footer, lightbox and
+globe import map in the layout — not in individual pages.
