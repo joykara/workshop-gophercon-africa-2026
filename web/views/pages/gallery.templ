@@ -1,0 +1,46 @@
+package pages
+
+import (
+	"fmt"
+
+	"workshop/internal/domain/sighting"
+	"workshop/web/views/layout"
+)
+
+templ Gallery(sightings []sighting.Sighting) {
+	{{ tiles := photoTiles(sightings, 0) }}
+	@layout.Base(layout.BaseProps{
+		Title:       "Field photos — In the Wild",
+		Description: "Every photographed sighting in the record, laid out as a staggered field notebook.",
+		Current:     "gallery",
+	}) {
+		<section class="section">
+			<div class="container">
+				<header class="section__head reveal">
+					<div class="section__head-text">
+						<span class="section__eyebrow">The gallery</span>
+						<h1>Every photo in the record</h1>
+						<p class="section__lede">{ fmt.Sprintf("%d photographs. Tap to see one up close, click through to open its sighting.", len(tiles)) }</p>
+					</div>
+				</header>
+				if len(tiles) == 0 {
+					<div class="empty">
+						<h2>No photos yet</h2>
+						<p>The record is empty. Run <code>go run . db seed</code> first.</p>
+					</div>
+				} else {
+					<div class="gallery-mason">
+						for _, p := range tiles {
+							<a class="gallery-mason__item" href={ templ.URL(p.URL) } data-lightbox data-caption={ photoCaption(p) } data-sighting={ p.SightingID }>
+								<img src={ templ.URL(p.URL) } alt={ p.Alt } loading="lazy"/>
+								<div class="gallery-mason__caption">
+									<p class="gallery-mason__title">{ p.Species }</p>
+								</div>
+							</a>
+						}
+					</div>
+				}
+			</div>
+		</section>
+	}
+}

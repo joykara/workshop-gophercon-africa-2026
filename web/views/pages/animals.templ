@@ -1,0 +1,49 @@
+package pages
+
+import (
+	"fmt"
+
+	"workshop/internal/domain/sighting"
+	"workshop/web/views/layout"
+)
+
+templ Animals(sightings []sighting.Sighting) {
+	{{ tiles := animalTiles(sightings, 0) }}
+	@layout.Base(layout.BaseProps{
+		Title:       "Every animal — In the Wild",
+		Description: "Every species we've recorded a sighting of, ranked by how often they appear.",
+		Current:     "animals",
+	}) {
+		<section class="section">
+			<div class="container">
+				<header class="section__head reveal">
+					<div class="section__head-text">
+						<span class="section__eyebrow">The catalogue</span>
+						<h1>Every animal, in order of how often we've seen them</h1>
+						<p class="section__lede">{ fmt.Sprintf("%d species with at least one photographed sighting.", len(tiles)) }</p>
+					</div>
+				</header>
+				if len(tiles) == 0 {
+					<div class="empty">
+						<h2>No animals yet</h2>
+						<p>Run <code>go run . db seed</code> to load the bundled GBIF data.</p>
+					</div>
+				} else {
+					<div class="animal-row">
+						for _, a := range tiles {
+							<a class="animal-tile" href={ templ.URL("/sightings/" + a.SightingID) }>
+								if a.PhotoURL != "" {
+									<img src={ templ.URL(a.PhotoURL) } alt={ a.Name } loading="lazy"/>
+								}
+								<div class="animal-tile__caption">
+									<p class="animal-tile__name">{ a.Name }</p>
+									<p class="animal-tile__count">{ fmt.Sprintf("%d sightings", a.Count) }</p>
+								</div>
+							</a>
+						}
+					</div>
+				}
+			</div>
+		</section>
+	}
+}

@@ -1,0 +1,24 @@
+package pages
+
+import "workshop/web/views/layout"
+
+templ NotFound() {
+	@layout.Base(layout.BaseProps{
+		Title:       "Not here — In the Wild",
+		Description: "The page you were looking for has wandered off.",
+		Current:     "404",
+	}) {
+		<div class="notfound">
+			<div class="notfound__inner">
+				<p class="notfound__code">404</p>
+				<h1>This trail went cold</h1>
+				<p>Whatever was here has wandered off — maybe the link is older than the record. Try one of these instead.</p>
+				<div class="notfound__links">
+					<a href="/">Home</a>
+					<a href="/animals">Animals</a>
+					<a href="/gallery">Gallery</a>
+				</div>
+			</div>
+		</div>
+	}
+}

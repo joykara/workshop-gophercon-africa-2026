@@ -1,0 +1,150 @@
+package pages
+
+import (
+	"fmt"
+
+	"workshop/internal/domain/sighting"
+	"workshop/internal/domain/weather"
+	"workshop/web/views/layout"
+)
+
+templ Sighting(s sighting.Sighting, related []sighting.Sighting) {
+	@layout.Base(layout.BaseProps{
+		Title:       sightingTitle(s),
+		Description: fmt.Sprintf("Sighting of %s in %s on %s.", animalName(s.Species), s.Location.Country, s.HappenedAt.Format("2 January 2006")),
+		Current:     "sighting",
+	}) {
+		<section class="detail-hero">
+			if cover := coverPhotoURL(s); cover != "" {
+				<img class="detail-hero__photo" src={ templ.URL(cover) } alt={ animalName(s.Species) }/>
+			}
+			<div class="detail-hero__scrim"></div>
+			<div class="detail-hero__content">
+				<span class="detail-hero__eyebrow">Sighting</span>
+				<h1>{ animalName(s.Species) }</h1>
+				if s.Species.ScientificName != "" {
+					<p class="detail-hero__latin">{ s.Species.ScientificName }</p>
+				}
+			</div>
+		</section>
+
+		<section class="section">
+			<div class="container">
+				<div class="detail-body">
+					<div class="detail-prose">
+						<p>
+							{ fmt.Sprintf("Seen on %s in %s.", s.HappenedAt.Format("2 January 2006"), placeShort(s.Location)) }
+							if s.IndividualCount != nil {
+								{ fmt.Sprintf(" %s recorded.", individualsWord(*s.IndividualCount)) }
+							}
+							if s.RecordedBy != "" {
+								{ fmt.Sprintf(" Observed by %s.", s.RecordedBy) }
+							}
+						</p>
+						if s.Remarks != "" {
+							<p>{ s.Remarks }</p>
+						}
+						if s.ReferenceURL != "" {
+							<p><a href={ templ.URL(s.ReferenceURL) } rel="noopener">Original GBIF record →</a></p>
+						}
+
+						if len(related) > 0 {
+							<h2 style="margin-top:48px">More from this location</h2>
+							<div class="related-strip">
+								for _, r := range related {
+									if url := coverPhotoURL(r); url != "" {
+										<a href={ templ.URL("/sightings/" + r.ID.String()) }>
+											<img src={ templ.URL(url) } alt={ animalName(r.Species) } loading="lazy"/>
+										</a>
+									}
+								}
+							</div>
+						}
+					</div>
+
+					<aside class="detail-facts">
+						<h2>Facts</h2>
+						<dl class="card__meta">
+							<dt>Seen</dt>
+							<dd>{ s.HappenedAt.Format("2 January 2006") }</dd>
+							<dt>Where</dt>
+							<dd>{ placeShort(s.Location) }</dd>
+							if s.IndividualCount != nil {
+								<dt>Count</dt>
+								<dd>{ individualsWord(*s.IndividualCount) }</dd>
+							}
+							if s.RecordedBy != "" {
+								<dt>By</dt>
+								<dd>{ s.RecordedBy }</dd>
+							}
+							if s.Species.Family != "" {
+								<dt>Family</dt>
+								<dd>{ s.Species.Family }</dd>
+							}
+							if s.Species.Order != "" {
+								<dt>Order</dt>
+								<dd>{ s.Species.Order }</dd>
+							}
+							if s.Weather.Condition.Description != "" {
+								<dt>Weather</dt>
+								<dd>{ weatherFull(s.Weather) }</dd>
+							}
+							if s.Weather.Wind.Speed > 0 {
+								<dt>Wind</dt>
+								<dd>{ fmt.Sprintf("%.0f km/h", s.Weather.Wind.Speed) }</dd>
+							}
+							<dt>Coordinates</dt>
+							<dd>{ fmt.Sprintf("%.4f, %.4f", s.Location.Latitude, s.Location.Longitude) }</dd>
+						</dl>
+					</aside>
+				</div>
+			</div>
+		</section>
+	}
+}
+
+func sightingTitle(s sighting.Sighting) string {
+	return fmt.Sprintf("%s — In the Wild", animalName(s.Species))
+}
+
+func coverPhotoURL(s sighting.Sighting) string {
+	for _, m := range s.Media {
+		if m.Type == "StillImage" && m.URL != "" {
+			return m.URL
+		}
+	}
+	return ""
+}
+
+func placeShort(l sighting.Location) string {
+	parts := make([]string, 0, 3)
+	if l.Locality != "" {
+		parts = append(parts, l.Locality)
+	}
+	if l.StateProvince != "" {
+		parts = append(parts, l.StateProvince)
+	}
+	if l.Country != "" {
+		parts = append(parts, l.Country)
+	}
+	if len(parts) == 0 {
+		return "Location unknown"
+	}
+	out := parts[0]
+	for i := 1; i < len(parts); i++ {
+		out += ", " + parts[i]
+	}
+	return out
+}
+
+func individualsWord(n int) string {
+	if n == 1 {
+		return "1 individual"
+	}
+	return fmt.Sprintf("%d individuals", n)
+}
+
+func weatherFull(w weather.Weather) string {
+	return fmt.Sprintf("%s, %.0f°C (feels %.0f°C), %d%% humidity",
+		w.Condition.Description, w.Temperature.Actual, w.Temperature.Apparent, w.Humidity)
+}
