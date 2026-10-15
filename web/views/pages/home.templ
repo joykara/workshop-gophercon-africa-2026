@@ -12,74 +12,131 @@ templ Home(sightings []sighting.Sighting) {
 	{{ sum := sighting.Summarise(sightings) }}
 	{{ byYear := sighting.CountByYear(sightings) }}
 	{{ hero := heroItems(sightings, 5) }}
-	{{ animals := topAnimals(sightings, 8) }}
-	{{ countries := topCountries(sightings, 8) }}
+	{{ animals := animalTiles(sightings, 8) }}
+	{{ photos := photoTiles(sightings, 10) }}
+	{{ animalBars := topAnimals(sightings, 6) }}
+	{{ countryBars := topCountries(sightings, 6) }}
+	{{ globe := globePoints(sightings) }}
 	@layout.Base(layout.BaseProps{
-		Title:       "Night Sightings — animals, places and weather",
-		Description: "A dark, field-notebook view of animal sightings around the world: the most-seen species, where they appeared, and the conditions that night.",
+		Title:       "In the Wild — animals, places and weather",
+		Description: "A cinematic, data-driven view of animal sightings around the world: the most-seen species, where they appeared, and the conditions they were seen in.",
+		Current:     "home",
 	}) {
 		@components.Hero(hero)
 
-		<section id="stats" class="section">
+		<div class="stats-strip">
+			<div class="stats-strip__inner">
+				<span><strong>{ fmt.Sprintf("%d", sum.Sightings) }</strong> sightings</span>
+				<span class="stats-strip__dot" aria-hidden="true"></span>
+				<span><strong>{ fmt.Sprintf("%d", sum.Species) }</strong> species</span>
+				<span class="stats-strip__dot" aria-hidden="true"></span>
+				<span><strong>{ fmt.Sprintf("%d", sum.Countries) }</strong> countries</span>
+				<span class="stats-strip__dot" aria-hidden="true"></span>
+				<span><strong>{ fmt.Sprintf("%d", sum.Media) }</strong> photos</span>
+				<span class="stats-strip__dot" aria-hidden="true"></span>
+				<span><strong>{ fmt.Sprintf("%d–%d", sum.Earliest.Year(), sum.Latest.Year()) }</strong></span>
+			</div>
+		</div>
+
+		<section id="animals" class="section">
 			<div class="container">
-				<header class="section__head">
-					<span class="section__eyebrow">By the numbers</span>
-					<h2>What the night has recorded</h2>
-					if sum.Sightings > 0 {
-						<p class="section__lede">
-							{ fmt.Sprintf("%d sightings across %d species in %d countries, from %d to %d.",
-								sum.Sightings, sum.Species, sum.Countries, sum.Earliest.Year(), sum.Latest.Year()) }
-						</p>
-					}
+				<header class="section__head reveal">
+					<div class="section__head-text">
+						<span class="section__eyebrow">The cast</span>
+						<h2>Most-seen animals</h2>
+						<p class="section__lede">Our top species, ranked by how often they turn up across the record.</p>
+					</div>
+					<a href="/animals" class="cta-link">View all animals →</a>
 				</header>
-				<ul class="stats" role="list">
-					<li class="stat">
-						<p class="stat__label">Sightings</p>
-						<p class="stat__value">{ fmt.Sprintf("%d", sum.Sightings) }</p>
-					</li>
-					<li class="stat">
-						<p class="stat__label">Species</p>
-						<p class="stat__value">{ fmt.Sprintf("%d", sum.Species) }</p>
-					</li>
-					<li class="stat">
-						<p class="stat__label">Countries</p>
-						<p class="stat__value">{ fmt.Sprintf("%d", sum.Countries) }</p>
-					</li>
-					<li class="stat">
-						<p class="stat__label">Photographs</p>
-						<p class="stat__value">{ fmt.Sprintf("%d", sum.Media) }</p>
-					</li>
-					if sum.Individuals > 0 {
-						<li class="stat">
-							<p class="stat__label">Individuals</p>
-							<p class="stat__value">{ fmt.Sprintf("%d", sum.Individuals) }</p>
-						</li>
+				<div class="animal-row reveal">
+					for _, a := range animals {
+						<a class="animal-tile" href={ templ.URL("/sightings/" + a.SightingID) }>
+							if a.PhotoURL != "" {
+								<img src={ templ.URL(a.PhotoURL) } alt={ a.Name } loading="lazy"/>
+							}
+							<div class="animal-tile__caption">
+								<p class="animal-tile__name">{ a.Name }</p>
+								<p class="animal-tile__count">{ fmt.Sprintf("%d sightings", a.Count) }</p>
+							</div>
+						</a>
 					}
-					if sum.Recorders > 0 {
-						<li class="stat">
-							<p class="stat__label">Observers</p>
-							<p class="stat__value">{ fmt.Sprintf("%d", sum.Recorders) }</p>
-						</li>
-					}
-				</ul>
+				</div>
 			</div>
 		</section>
 
-		<section id="charts" class="section section--muted">
+		<section id="geo" class="section section--sunk">
 			<div class="container">
-				<header class="section__head">
-					<span class="section__eyebrow">Patterns</span>
-					<h2>Most-seen animals and the places they roam</h2>
-					<p class="section__lede">The leaderboards sum the data behind every slide above. The sparkline follows sightings year by year.</p>
+				<header class="section__head reveal">
+					<div class="section__head-text">
+						<span class="section__eyebrow">Where</span>
+						<h2>Across the globe</h2>
+						<p class="section__lede">Every recorded sighting as a point of light. Switch to the flat map for address-level detail.</p>
+					</div>
+				</header>
+				<div class="geo" data-geo>
+					<div class="geo__tabs" role="tablist">
+						<button type="button" class="geo__tab" data-view="globe" aria-pressed="true">Globe</button>
+						<button type="button" class="geo__tab" data-view="map" aria-pressed="false">Map</button>
+					</div>
+					<div class="geo__view" data-view="globe" data-active>
+						@components.ThreeScene(components.ThreeSceneProps{
+							Scene: "globe",
+							Label: fmt.Sprintf("Rotating globe with %d sighting hotspots", len(globe)),
+						})
+					</div>
+					<div class="geo__view" data-view="map">
+						@components.Map(components.MapProps{
+							Points:  components.MapPoints(sightings),
+							Cluster: true,
+							Label:   "Flat map of every sighting",
+							Class:   "map--dark",
+						})
+					</div>
+				</div>
+				@templ.JSONScript("globe-points", globe)
+			</div>
+		</section>
+
+		<section id="gallery" class="section">
+			<div class="container">
+				<header class="section__head reveal">
+					<div class="section__head-text">
+						<span class="section__eyebrow">Field photos</span>
+						<h2>Latest from the lens</h2>
+						<p class="section__lede">A selection from the record. Tap one to see it big; click through to the full sighting.</p>
+					</div>
+					<a href="/gallery" class="cta-link">View all photos →</a>
+				</header>
+				<div class="gallery-mason reveal">
+					for _, p := range photos {
+						<a class="gallery-mason__item" href={ templ.URL(p.URL) } data-lightbox data-caption={ photoCaption(p) } data-sighting={ p.SightingID }>
+							<img src={ templ.URL(p.URL) } alt={ p.Alt } loading="lazy"/>
+							<div class="gallery-mason__caption">
+								<p class="gallery-mason__title">{ p.Species }</p>
+							</div>
+						</a>
+					}
+				</div>
+			</div>
+		</section>
+
+		<section id="charts" class="section section--sunk">
+			<div class="container">
+				<header class="section__head reveal">
+					<div class="section__head-text">
+						<span class="section__eyebrow">Patterns</span>
+						<h2>The numbers behind the record</h2>
+						<p class="section__lede">Leaderboards for the most-seen animals and the countries they turned up in, plus how sightings fell year by year.</p>
+					</div>
 				</header>
 				<div class="chart-grid">
 					<div class="chart-card">
 						<h3>Top animals</h3>
-						@components.Bars(animals)
+						@components.Bars(animalBars)
 					</div>
 					<div class="chart-card">
 						<h3>Top countries</h3>
-						@components.Bars(countries)
+						@components.Bars(countryBars)
 					</div>
 					<div class="chart-card chart-card--wide">
 						<h3>Sightings per year</h3>
@@ -89,45 +146,12 @@ templ Home(sightings []sighting.Sighting) {
 				</div>
 			</div>
 		</section>
-
-		<section id="map" class="section">
-			<div class="container">
-				<header class="section__head">
-					<span class="section__eyebrow">Where</span>
-					<h2>Every sighting on one map</h2>
-					<p class="section__lede">Markers cluster at low zoom; open one to jump to its record below.</p>
-				</header>
-				@components.Map(components.MapProps{
-					Points:  components.MapPoints(sightings),
-					Cluster: true,
-					Label:   "Where the sightings were",
-					Class:   "map--dark",
-				})
-			</div>
-		</section>
-
-		<section id="sightings" class="section section--muted">
-			<div class="container">
-				<header class="section__head">
-					<span class="section__eyebrow">The record</span>
-					<h2>All sightings</h2>
-					<p class="section__lede">{ fmt.Sprintf("%d entries, most recent first.", len(sightings)) }</p>
-				</header>
-				if len(sightings) == 0 {
-					<div class="empty">
-						<h2>No sightings yet</h2>
-						<p>Run <code>go run . db seed</code> to load the bundled GBIF data.</p>
-					</div>
-				} else {
-					<ul class="sightings" role="list">
-						for _, s := range sightings {
-							<li>
-								@components.SightingCard(s)
-							</li>
-						}
-					</ul>
-				}
-			</div>
-		</section>
 	}
+}
+
+func photoCaption(p PhotoTile) string {
+	if p.Creator != "" {
+		return p.Species + " · " + p.Creator
+	}
+	return p.Species
 }
