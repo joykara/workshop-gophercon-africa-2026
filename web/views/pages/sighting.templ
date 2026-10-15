@@ -14,25 +14,32 @@ templ Sighting(s sighting.Sighting, related []sighting.Sighting) {
 		Description: fmt.Sprintf("Sighting of %s in %s on %s.", animalName(s.Species), s.Location.Country, s.HappenedAt.Format("2 January 2006")),
 		Current:     "sighting",
 	}) {
-		<section class="detail-hero">
+		<section class="detail-hero" data-tilt>
 			if cover := coverPhotoURL(s); cover != "" {
-				<img class="detail-hero__photo" src={ templ.URL(cover) } alt={ animalName(s.Species) }/>
+				<div class="detail-hero__photo-wrap">
+					<img class="detail-hero__photo" src={ templ.URL(cover) } alt={ animalName(s.Species) }/>
+				</div>
 			}
 			<div class="detail-hero__scrim"></div>
 			<div class="detail-hero__content">
 				<span class="detail-hero__eyebrow">Sighting</span>
-				<h1>{ animalName(s.Species) }</h1>
+				<h1 class="detail-hero__title">{ animalName(s.Species) }</h1>
 				if s.Species.ScientificName != "" {
 					<p class="detail-hero__latin">{ s.Species.ScientificName }</p>
 				}
 			</div>
 		</section>
 
-		<section class="section">
+		<section class="section detail-section">
+			if cover := coverPhotoURL(s); cover != "" {
+				<div class="section__bg detail-section__bg" aria-hidden="true">
+					<img src={ templ.URL(cover) } alt="" loading="lazy"/>
+				</div>
+			}
 			<div class="container">
 				<div class="detail-body">
-					<div class="detail-prose">
-						<p>
+					<div class="detail-prose glass reveal">
+						<p class="detail-prose__lead">
 							{ fmt.Sprintf("Seen on %s in %s.", s.HappenedAt.Format("2 January 2006"), placeShort(s.Location)) }
 							if s.IndividualCount != nil {
 								{ fmt.Sprintf(" %s recorded.", individualsWord(*s.IndividualCount)) }
@@ -47,22 +54,9 @@ templ Sighting(s sighting.Sighting, related []sighting.Sighting) {
 						if s.ReferenceURL != "" {
 							<p><a href={ templ.URL(s.ReferenceURL) } rel="noopener">Original GBIF record →</a></p>
 						}
-
-						if len(related) > 0 {
-							<h2 style="margin-top:48px">More from this location</h2>
-							<div class="related-strip">
-								for _, r := range related {
-									if url := coverPhotoURL(r); url != "" {
-										<a href={ templ.URL("/sightings/" + r.ID.String()) }>
-											<img src={ templ.URL(url) } alt={ animalName(r.Species) } loading="lazy"/>
-										</a>
-									}
-								}
-							</div>
-						}
 					</div>
 
-					<aside class="detail-facts">
+					<aside class="detail-facts glass reveal">
 						<h2>Facts</h2>
 						<dl class="card__meta">
 							<dt>Seen</dt>
@@ -98,6 +92,21 @@ templ Sighting(s sighting.Sighting, related []sighting.Sighting) {
 						</dl>
 					</aside>
 				</div>
+
+				if len(related) > 0 {
+					<div class="detail-related reveal">
+						<h2>More from this location</h2>
+						<div class="related-strip">
+							for _, r := range related {
+								if url := coverPhotoURL(r); url != "" {
+									<a href={ templ.URL("/sightings/" + r.ID.String()) }>
+										<img src={ templ.URL(url) } alt={ animalName(r.Species) } loading="lazy"/>
+									</a>
+								}
+							}
+						</div>
+					</div>
+				}
 			</div>
 		</section>
 	}

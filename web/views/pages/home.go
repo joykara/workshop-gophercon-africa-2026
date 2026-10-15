@@ -3,6 +3,7 @@ package pages
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"workshop/internal/domain/sighting"
 	"workshop/internal/domain/species"
@@ -17,6 +18,28 @@ type AnimalTile struct {
 	PhotoURL   string
 	Count      int
 	SightingID string // first sighting of this species that has a photo
+}
+
+// PatternCard is one entry in the "Patterns" card gallery: an animal
+// or country with its total, a background photo, a short "best year"
+// line and a link through to a representative sighting.
+type PatternCard struct {
+	Rank       int
+	Name       string
+	Count      int
+	ByYear     map[int]int
+	PhotoURL   string
+	SightingID string // first sighting with a photo in this group
+	PeakYear   int    // year with the most sightings
+	PeakCount  int
+	LatestYear int
+}
+
+// SectionBG is a background photo + its alt text for a frosted-glass
+// section. Picked once per page from the real sightings data.
+type SectionBG struct {
+	PhotoURL string
+	Alt      string
 }
 
 // PhotoTile is one entry in the gallery: a photo and the sighting it
@@ -256,4 +279,211 @@ func animalName(sp species.Species) string {
 		return sp.CanonicalName
 	}
 	return sp.ScientificName
+}
+
+// topAnimalCards builds "Patterns" cards for the top-n species: name,
+// count, per-year counts for a sparkline, and a cover photo for the
+// card background.
+func topAnimalCards(sightings []sighting.Sighting, n int) []PatternCard {
+	groups := make(map[string][]sighting.Sighting)
+	order := make([]string, 0)
+	for _, s := range sightings {
+		name := animalName(s.Species)
+		if name == "" {
+			continue
+		}
+		if _, ok := groups[name]; !ok {
+			order = append(order, name)
+		}
+		groups[name] = append(groups[name], s)
+	}
+
+	type ranked struct {
+		name  string
+		count int
+	}
+	ranks := make([]ranked, 0, len(groups))
+	for _, k := range order {
+		ranks = append(ranks, ranked{k, len(groups[k])})
+	}
+	for i := 0; i < len(ranks); i++ {
+		best := i
+		for j := i + 1; j < len(ranks); j++ {
+			if ranks[j].count > ranks[best].count {
+				best = j
+			}
+		}
+		ranks[i], ranks[best] = ranks[best], ranks[i]
+	}
+	if n > 0 && len(ranks) > n {
+		ranks = ranks[:n]
+	}
+
+	cards := make([]PatternCard, 0, len(ranks))
+	for i, r := range ranks {
+		g := groups[r.name]
+		photo, idx := firstPhotoWithIndex(g)
+		byYear := sighting.CountByYear(g)
+		cards = append(cards, PatternCard{
+			Rank:       i + 1,
+			Name:       r.name,
+			Count:      r.count,
+			ByYear:     byYear,
+			PhotoURL:   photo,
+			SightingID: idString(g, idx),
+			PeakYear:   peakYearOf(byYear),
+			PeakCount:  peakCountOf(byYear),
+			LatestYear: latestYearOf(byYear),
+		})
+	}
+	return cards
+}
+
+// topCountryCards is the country equivalent of topAnimalCards. There
+// are no "country photos" in the data, so PhotoURL is left blank; the
+// card uses the first photo of the top-ranked sighting in that
+// country as a background instead.
+func topCountryCards(sightings []sighting.Sighting, n int) []PatternCard {
+	groups := make(map[string][]sighting.Sighting)
+	order := make([]string, 0)
+	for _, s := range sightings {
+		c := s.Location.Country
+		if c == "" {
+			continue
+		}
+		if _, ok := groups[c]; !ok {
+			order = append(order, c)
+		}
+		groups[c] = append(groups[c], s)
+	}
+
+	type ranked struct {
+		name  string
+		count int
+	}
+	ranks := make([]ranked, 0, len(groups))
+	for _, k := range order {
+		ranks = append(ranks, ranked{k, len(groups[k])})
+	}
+	for i := 0; i < len(ranks); i++ {
+		best := i
+		for j := i + 1; j < len(ranks); j++ {
+			if ranks[j].count > ranks[best].count {
+				best = j
+			}
+		}
+		ranks[i], ranks[best] = ranks[best], ranks[i]
+	}
+	if n > 0 && len(ranks) > n {
+		ranks = ranks[:n]
+	}
+
+	cards := make([]PatternCard, 0, len(ranks))
+	for i, r := range ranks {
+		g := groups[r.name]
+		photo, idx := firstPhotoWithIndex(g)
+		byYear := sighting.CountByYear(g)
+		cards = append(cards, PatternCard{
+			Rank:       i + 1,
+			Name:       r.name,
+			Count:      r.count,
+			ByYear:     byYear,
+			PhotoURL:   photo,
+			SightingID: idString(g, idx),
+			PeakYear:   peakYearOf(byYear),
+			PeakCount:  peakCountOf(byYear),
+			LatestYear: latestYearOf(byYear),
+		})
+	}
+	return cards
+}
+
+func idString(group []sighting.Sighting, idx int) string {
+	if idx < 0 || idx >= len(group) {
+		return ""
+	}
+	return group[idx].ID.String()
+}
+
+func peakYearOf(byYear map[int]int) int {
+	var peakY, peakC int
+	for y, c := range byYear {
+		if c > peakC || (c == peakC && y < peakY) {
+			peakY, peakC = y, c
+		}
+	}
+	return peakY
+}
+
+func peakCountOf(byYear map[int]int) int {
+	var peakC int
+	for _, c := range byYear {
+		if c > peakC {
+			peakC = c
+		}
+	}
+	return peakC
+}
+
+func latestYearOf(byYear map[int]int) int {
+	var latest int
+	for y := range byYear {
+		if y > latest {
+			latest = y
+		}
+	}
+	return latest
+}
+
+// cardSummary is the Summary a PatternCard needs for its sparkline.
+// We don't carry the full Summary around; the sparkline only reads
+// Earliest and Latest, so we hand it a minimal struct.
+func cardSummary(c PatternCard) sighting.Summary {
+	var earliest, latest int
+	for y := range c.ByYear {
+		if earliest == 0 || y < earliest {
+			earliest = y
+		}
+		if y > latest {
+			latest = y
+		}
+	}
+	s := sighting.Summary{Sightings: c.Count}
+	if earliest > 0 {
+		s.Earliest = yearStart(earliest)
+		s.Latest = yearStart(latest)
+	}
+	return s
+}
+
+func yearStart(y int) time.Time {
+	return time.Date(y, time.January, 1, 0, 0, 0, 0, time.UTC)
+}
+
+// sectionBG picks a cover photo from the sightings whose vernacular
+// name contains any of the given hints. Falls back to the first
+// sighting with a photo. Used to decorate the full-photo + glass
+// panel sections on the home page.
+func sectionBG(sightings []sighting.Sighting, hints ...string) SectionBG {
+	for _, h := range hints {
+		hl := strings.ToLower(h)
+		for _, s := range sightings {
+			if !strings.Contains(strings.ToLower(s.Species.VernacularName), hl) {
+				continue
+			}
+			for _, m := range s.Media {
+				if m.Type == "StillImage" && m.URL != "" {
+					return SectionBG{PhotoURL: m.URL, Alt: s.Species.VernacularName}
+				}
+			}
+		}
+	}
+	for _, s := range sightings {
+		for _, m := range s.Media {
+			if m.Type == "StillImage" && m.URL != "" {
+				return SectionBG{PhotoURL: m.URL, Alt: ""}
+			}
+		}
+	}
+	return SectionBG{}
 }

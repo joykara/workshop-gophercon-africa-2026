@@ -26,10 +26,18 @@
 		root.appendChild(document.createElement('strong')).textContent = point.title;
 		root.appendChild(document.createElement('span')).textContent =
 			[point.date, point.place, point.count].filter(Boolean).join(' · ');
-		if (point.anchor) {
+		// Prefer the full URL (opens the sighting detail page); fall back
+		// to the in-page anchor only when a URL wasn't supplied.
+		if (point.url) {
+			const link = root.appendChild(document.createElement('a'));
+			link.href = point.url;
+			link.textContent = 'Open sighting →';
+			link.className = 'map__popup-link';
+		} else if (point.anchor) {
 			const link = root.appendChild(document.createElement('a'));
 			link.href = '#' + point.anchor;
 			link.textContent = 'Jump to record';
+			link.className = 'map__popup-link';
 		}
 		return root;
 	}
@@ -80,11 +88,18 @@
 		}
 		layer.addTo(map);
 
-		map.fitBounds(L.latLngBounds(latLngs), {
-			padding: [24, 24],
-			animate: false,
-			maxZoom: Number(el.dataset.maxZoom) || 12,
-		});
+		// Start at a global view so every pin is visible, then let the
+		// user zoom in. `data-world="true"` keeps the whole-world framing
+		// explicit, so the home geo panel reads as a planet.
+		if (el.dataset.world !== undefined) {
+			map.setView([20, 0], 2);
+		} else {
+			map.fitBounds(L.latLngBounds(latLngs), {
+				padding: [24, 24],
+				animate: false,
+				maxZoom: Number(el.dataset.maxZoom) || 12,
+			});
+		}
 
 		// Wheel zoom waits for a click or focus, so the page scrolls past freely.
 		map.on('focus', () => map.scrollWheelZoom.enable());

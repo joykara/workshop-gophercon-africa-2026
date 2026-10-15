@@ -10,6 +10,7 @@ type MapPoint struct {
 	Place  string  `json:"place"`
 	Count  string  `json:"count,omitzero"`
 	Anchor string  `json:"anchor"`
+	URL    string  `json:"url"`
 }
 
 func MapPoints(sightings []sighting.Sighting) []MapPoint {
@@ -26,6 +27,7 @@ func MapPoints(sightings []sighting.Sighting) []MapPoint {
 			Place:  place(s.Location),
 			Count:  countLabel(s.IndividualCount),
 			Anchor: Anchor(s),
+			URL:    "/sightings/" + s.ID.String(),
 		})
 	}
 	return points

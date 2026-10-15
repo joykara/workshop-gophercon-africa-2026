@@ -49,7 +49,7 @@ func Animals(sightings []sighting.Sighting) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<section class=\"section\"><div class=\"container\"><header class=\"section__head reveal\"><div class=\"section__head-text\"><span class=\"section__eyebrow\">The catalogue</span><h1>Every animal, in order of how often we've seen them</h1><p class=\"section__lede\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<section class=\"section has-header-space\"><div class=\"container\"><header class=\"section__head reveal\"><div class=\"section__head-text\"><span class=\"section__eyebrow\">The catalogue</span><h1>Every animal, in order of how often we've seen them</h1><p class=\"section__lede\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

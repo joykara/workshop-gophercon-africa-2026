@@ -14,9 +14,13 @@ templ Home(sightings []sighting.Sighting) {
 	{{ hero := heroItems(sightings, 5) }}
 	{{ animals := animalTiles(sightings, 8) }}
 	{{ photos := photoTiles(sightings, 10) }}
-	{{ animalBars := topAnimals(sightings, 6) }}
-	{{ countryBars := topCountries(sightings, 6) }}
+	{{ animalCards := topAnimalCards(sightings, 6) }}
+	{{ countryCards := topCountryCards(sightings, 6) }}
 	{{ globe := globePoints(sightings) }}
+	{{ bgAnimals := sectionBG(sightings, "leopard", "lion", "cheetah", "elephant") }}
+	{{ bgGeo := sectionBG(sightings, "eagle", "whale", "turtle") }}
+	{{ bgGallery := sectionBG(sightings, "flamingo", "macaw", "penguin", "owl") }}
+	{{ bgPatterns := sectionBG(sightings, "zebra", "wildebeest", "buffalo", "elephant") }}
 	@layout.Base(layout.BaseProps{
 		Title:       "In the Wild — animals, places and weather",
 		Description: "A cinematic, data-driven view of animal sightings around the world: the most-seen species, where they appeared, and the conditions they were seen in.",
@@ -38,115 +42,189 @@ templ Home(sightings []sighting.Sighting) {
 			</div>
 		</div>
 
-		<section id="animals" class="section">
+		<section id="animals" class="section section--photo">
+			if bgAnimals.PhotoURL != "" {
+				<div class="section__bg" aria-hidden="true">
+					<img src={ templ.URL(bgAnimals.PhotoURL) } alt="" loading="lazy"/>
+				</div>
+			}
 			<div class="container">
-				<header class="section__head reveal">
-					<div class="section__head-text">
-						<span class="section__eyebrow">The cast</span>
-						<h2>Most-seen animals</h2>
-						<p class="section__lede">Our top species, ranked by how often they turn up across the record.</p>
+				<div class="glass">
+					<header class="section__head reveal">
+						<div class="section__head-text">
+							<span class="section__eyebrow">The cast</span>
+							<h2>Most-seen animals</h2>
+							<p class="section__lede">Our top species, ranked by how often they turn up across the record.</p>
+						</div>
+						<a href="/animals" class="cta-link">View all animals →</a>
+					</header>
+					<div class="animal-row reveal">
+						for _, a := range animals {
+							<a class="animal-tile" href={ templ.URL("/sightings/" + a.SightingID) }>
+								if a.PhotoURL != "" {
+									<img src={ templ.URL(a.PhotoURL) } alt={ a.Name } loading="lazy"/>
+								}
+								<div class="animal-tile__caption">
+									<p class="animal-tile__name">{ a.Name }</p>
+									<p class="animal-tile__count">{ fmt.Sprintf("%d sightings", a.Count) }</p>
+								</div>
+							</a>
+						}
 					</div>
-					<a href="/animals" class="cta-link">View all animals →</a>
-				</header>
-				<div class="animal-row reveal">
-					for _, a := range animals {
-						<a class="animal-tile" href={ templ.URL("/sightings/" + a.SightingID) }>
-							if a.PhotoURL != "" {
-								<img src={ templ.URL(a.PhotoURL) } alt={ a.Name } loading="lazy"/>
-							}
-							<div class="animal-tile__caption">
-								<p class="animal-tile__name">{ a.Name }</p>
-								<p class="animal-tile__count">{ fmt.Sprintf("%d sightings", a.Count) }</p>
-							</div>
-						</a>
-					}
 				</div>
 			</div>
 		</section>
 
-		<section id="geo" class="section section--sunk">
-			<div class="container">
-				<header class="section__head reveal">
-					<div class="section__head-text">
-						<span class="section__eyebrow">Where</span>
-						<h2>Across the globe</h2>
-						<p class="section__lede">Every recorded sighting as a point of light. Switch to the flat map for address-level detail.</p>
-					</div>
-				</header>
-				<div class="geo" data-geo>
-					<div class="geo__tabs" role="tablist">
-						<button type="button" class="geo__tab" data-view="globe" aria-pressed="true">Globe</button>
-						<button type="button" class="geo__tab" data-view="map" aria-pressed="false">Map</button>
-					</div>
-					<div class="geo__view" data-view="globe" data-active>
-						@components.ThreeScene(components.ThreeSceneProps{
-							Scene: "globe",
-							Label: fmt.Sprintf("Rotating globe with %d sighting hotspots", len(globe)),
-						})
-					</div>
-					<div class="geo__view" data-view="map">
-						@components.Map(components.MapProps{
-							Points:  components.MapPoints(sightings),
-							Cluster: true,
-							Label:   "Flat map of every sighting",
-							Class:   "map--dark",
-						})
-					</div>
+		<section id="geo" class="section section--photo">
+			if bgGeo.PhotoURL != "" {
+				<div class="section__bg" aria-hidden="true">
+					<img src={ templ.URL(bgGeo.PhotoURL) } alt="" loading="lazy"/>
 				</div>
-				@templ.JSONScript("globe-points", globe)
-			</div>
-		</section>
-
-		<section id="gallery" class="section">
+			}
 			<div class="container">
-				<header class="section__head reveal">
-					<div class="section__head-text">
-						<span class="section__eyebrow">Field photos</span>
-						<h2>Latest from the lens</h2>
-						<p class="section__lede">A selection from the record. Tap one to see it big; click through to the full sighting.</p>
+				<div class="glass">
+					<header class="section__head reveal">
+						<div class="section__head-text">
+							<span class="section__eyebrow">Where</span>
+							<h2>Across the globe</h2>
+							<p class="section__lede">Every recorded sighting as a point of light. Switch to the flat map for address-level detail.</p>
+						</div>
+					</header>
+					<!-- Globe view is paused for now; keeping only the flat map.
+				     Flip the tab back on by uncommenting the globe view below
+				     and the ThreeScene import on top of this file. -->
+				<div class="geo geo--single">
+						<div class="geo__view" data-view="map" data-active>
+							@components.Map(components.MapProps{
+								Points:  components.MapPoints(sightings),
+								Cluster: true,
+								World:   true,
+								Label:   "Flat map of every sighting",
+								Class:   "map--dark",
+							})
+						</div>
 					</div>
-					<a href="/gallery" class="cta-link">View all photos →</a>
-				</header>
-				<div class="gallery-mason reveal">
-					for _, p := range photos {
-						<a class="gallery-mason__item" href={ templ.URL(p.URL) } data-lightbox data-caption={ photoCaption(p) } data-sighting={ p.SightingID }>
-							<img src={ templ.URL(p.URL) } alt={ p.Alt } loading="lazy"/>
-							<div class="gallery-mason__caption">
-								<p class="gallery-mason__title">{ p.Species }</p>
-							</div>
-						</a>
-					}
+					@templ.JSONScript("globe-points", globe)
 				</div>
 			</div>
 		</section>
 
-		<section id="charts" class="section section--sunk">
+		<section id="gallery" class="section section--photo">
+			if bgGallery.PhotoURL != "" {
+				<div class="section__bg" aria-hidden="true">
+					<img src={ templ.URL(bgGallery.PhotoURL) } alt="" loading="lazy"/>
+				</div>
+			}
 			<div class="container">
-				<header class="section__head reveal">
-					<div class="section__head-text">
-						<span class="section__eyebrow">Patterns</span>
-						<h2>The numbers behind the record</h2>
-						<p class="section__lede">Leaderboards for the most-seen animals and the countries they turned up in, plus how sightings fell year by year.</p>
+				<div class="glass">
+					<header class="section__head reveal">
+						<div class="section__head-text">
+							<span class="section__eyebrow">Field photos</span>
+							<h2>Latest from the lens</h2>
+							<p class="section__lede">A selection from the record. Tap one to see it big; click through to the full sighting.</p>
+						</div>
+						<a href="/gallery" class="cta-link">View all photos →</a>
+					</header>
+					<div class="gallery-mason reveal">
+						for _, p := range photos {
+							<a class="gallery-mason__item" href={ templ.URL(p.URL) } data-lightbox data-caption={ photoCaption(p) } data-sighting={ p.SightingID }>
+								<img src={ templ.URL(p.URL) } alt={ p.Alt } loading="lazy"/>
+								<div class="gallery-mason__caption">
+									<p class="gallery-mason__title">{ p.Species }</p>
+								</div>
+							</a>
+						}
 					</div>
-				</header>
-				<div class="chart-grid">
-					<div class="chart-card">
-						<h3>Top animals</h3>
-						@components.Bars(animalBars)
-					</div>
-					<div class="chart-card">
-						<h3>Top countries</h3>
-						@components.Bars(countryBars)
-					</div>
-					<div class="chart-card chart-card--wide">
+				</div>
+			</div>
+		</section>
+
+		<section id="patterns" class="section section--photo">
+			if bgPatterns.PhotoURL != "" {
+				<div class="section__bg" aria-hidden="true">
+					<img src={ templ.URL(bgPatterns.PhotoURL) } alt="" loading="lazy"/>
+				</div>
+			}
+			<div class="container">
+				<div class="glass">
+					<header class="section__head reveal">
+						<div class="section__head-text">
+							<span class="section__eyebrow">Patterns</span>
+							<h2>The numbers behind the record</h2>
+							<p class="section__lede">Leaderboards for the most-seen animals and the countries they turned up in, plus how sightings fell year by year.</p>
+						</div>
+					</header>
+
+					<div class="pattern-featured reveal">
 						<h3>Sightings per year</h3>
-						<p class="chart-card__hint">{ fmt.Sprintf("%d to %d", sum.Earliest.Year(), sum.Latest.Year()) }</p>
+						<p class="pattern-featured__hint">{ fmt.Sprintf("%d to %d · %d records in all", sum.Earliest.Year(), sum.Latest.Year(), sum.Sightings) }</p>
 						@components.Sparkline(byYear, sum)
+					</div>
+
+					<div class="pattern-group reveal">
+						<h3 class="pattern-group__title">Top animals</h3>
+						<div class="pattern-cards">
+							for _, c := range animalCards {
+								@patternCard(c, "sightings")
+							}
+						</div>
+					</div>
+
+					<div class="pattern-group reveal">
+						<h3 class="pattern-group__title">Top countries</h3>
+						<div class="pattern-cards">
+							for _, c := range countryCards {
+								@patternCard(c, "sightings")
+							}
+						</div>
 					</div>
 				</div>
 			</div>
 		</section>
 	}
+}
+
+templ patternCard(c PatternCard, label string) {
+	if c.SightingID != "" {
+		<a class="pattern-card" href={ templ.URL("/sightings/" + c.SightingID) }>
+			@patternCardInner(c, label)
+		</a>
+	} else {
+		<article class="pattern-card pattern-card--static">
+			@patternCardInner(c, label)
+		</article>
+	}
+}
+
+templ patternCardInner(c PatternCard, label string) {
+	if c.PhotoURL != "" {
+		<div class="pattern-card__bg" aria-hidden="true">
+			<img src={ templ.URL(c.PhotoURL) } alt="" loading="lazy"/>
+		</div>
+	}
+	<div class="pattern-card__scrim"></div>
+	<div class="pattern-card__body">
+		<span class="pattern-card__rank">#{ fmt.Sprintf("%d", c.Rank) }</span>
+		<h4 class="pattern-card__name">{ c.Name }</h4>
+		<div class="pattern-card__count">
+			<span class="pattern-card__count-num">{ fmt.Sprintf("%d", c.Count) }</span>
+			<span class="pattern-card__count-label">{ label }</span>
+		</div>
+		if c.PeakYear > 0 {
+			<p class="pattern-card__meta">
+				Peak <strong>{ fmt.Sprintf("%d", c.PeakYear) }</strong>
+				if c.PeakCount > 0 {
+					<span class="pattern-card__meta-dim">({ fmt.Sprintf("%d sightings", c.PeakCount) })</span>
+				}
+				if c.LatestYear > 0 && c.LatestYear != c.PeakYear {
+					<span class="pattern-card__meta-sep"> · </span>Latest <strong>{ fmt.Sprintf("%d", c.LatestYear) }</strong>
+				}
+			</p>
+		}
+		if c.SightingID != "" {
+			<span class="pattern-card__cta">Open a record →</span>
+		}
+	</div>
 }
 
 func photoCaption(p PhotoTile) string {

@@ -49,7 +49,7 @@ func Gallery(sightings []sighting.Sighting) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<section class=\"section\"><div class=\"container\"><header class=\"section__head reveal\"><div class=\"section__head-text\"><span class=\"section__eyebrow\">The gallery</span><h1>Every photo in the record</h1><p class=\"section__lede\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<section class=\"section has-header-space\"><div class=\"container\"><header class=\"section__head reveal\"><div class=\"section__head-text\"><span class=\"section__eyebrow\">The gallery</span><h1>Every photo in the record</h1><p class=\"section__lede\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

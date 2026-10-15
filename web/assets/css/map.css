@@ -50,8 +50,30 @@
 
 .map__popup {
 	display: grid;
-	gap: 0.25rem;
+	gap: 0.35rem;
 	font-size: 0.875rem;
+}
+
+.map__popup-link {
+	display: inline-block;
+	margin-top: 0.4rem;
+	padding: 6px 12px;
+	background: var(--map-marker, #c2410c);
+	color: var(--map-marker-stroke, #fff);
+	border-radius: 999px;
+	font-size: 0.78rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	font-weight: 600;
+	text-decoration: none;
+	transition: transform 150ms ease, filter 150ms ease;
+	justify-self: start;
+}
+
+.map__popup-link:hover {
+	transform: translateY(-1px);
+	filter: brightness(1.1);
+	text-decoration: none;
 }
 
 /* Cluster bubbles take the marker colour instead of the plugin's greens. */

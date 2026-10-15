@@ -35,7 +35,7 @@ templ Base(props BaseProps) {
 			</script>
 			<link rel="preconnect" href="https://fonts.googleapis.com"/>
 			<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-			<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,500&family=Josefin+Sans:wght@300;400;500;600;700&display=swap"/>
+			<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Almendra+Display&family=Playpen+Sans:wght@300;400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,500&display=swap"/>
 			<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11.2.10/swiper-bundle.min.css" integrity="sha384-gAPqlBuTCdtVcYt9ocMOYWrnBZ4XSL6q+4eXqwNycOr4iFczhNKtnYhF3NEXJM51" crossorigin="anonymous"/>
 			<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw==" crossorigin="anonymous" referrerpolicy="no-referrer"/>
 			<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" integrity="sha384-pmjIAcz2bAn0xukfxADbZIb3t8oRT9Sv0rvO+BR5Csr6Dhqq+nZs59P0pPKQJkEV" crossorigin="anonymous"/>
@@ -57,18 +57,18 @@ templ Base(props BaseProps) {
 			</script>
 		</head>
 		<body>
-			<header class="site-header">
+			<header class={ "site-header", templ.KV("site-header--inner", props.Current != "home" && props.Current != "sighting") }>
 				<div class="site-header__inner">
 					<a class="wordmark" href="/">In the <em>Wild</em></a>
 					<nav class="site-nav" aria-label="Primary">
 						<a href="/" aria-current?={ props.Current == "home" }>Home</a>
 						<a href="/animals" aria-current?={ props.Current == "animals" }>Animals</a>
 						<a href="/gallery" aria-current?={ props.Current == "gallery" }>Gallery</a>
-						<button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
-							<svg class="theme-toggle__sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path></svg>
-							<span class="theme-toggle__label">Theme</span>
-						</button>
 					</nav>
+					<button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+						<svg class="theme-toggle__sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path></svg>
+						<span class="theme-toggle__label">Theme</span>
+					</button>
 				</div>
 			</header>
 			<main>
