@@ -8,46 +8,51 @@ import (
 
 	"workshop/internal/domain/sighting"
 	"workshop/internal/domain/species"
+	"workshop/internal/domain/weather"
 )
 
 templ SightingCard(s sighting.Sighting) {
-	<article class="card">
-		<!-- Header -->
-		<header class="card__header">
-			<h2>{ displayName(s.Species) }</h2>
-			if s.Species.ScientificName != "" {
-				<p class="card__scientific">{ s.Species.ScientificName }</p>
+	<article class="card" id={ Anchor(s) }>
+		<div class={ "card__gallery", templ.KV("card__gallery--empty", coverPhoto(s.Media) == "") }>
+			if url := coverPhoto(s.Media); url != "" {
+				<img src={ templ.URL(url) } alt={ displayName(s.Species) } loading="lazy"/>
+			} else {
+				<span>No photo</span>
 			}
-		</header>
-		<!-- Meta -->
-		<dl class="card__meta">
-			<dt>Seen</dt>
-			<dd>{ s.HappenedAt.Format("2 January 2006") }</dd>
-			<dt>Where</dt>
-			<dd>{ place(s.Location) }</dd>
-			if s.IndividualCount != nil {
-				<dt>Count</dt>
-				<dd>{ individuals(*s.IndividualCount) }</dd>
-			}
-			if s.RecordedBy != "" {
-				<dt>Recorded by</dt>
-				<dd>{ s.RecordedBy }</dd>
-			}
-		</dl>
-		<!-- Gallery -->
-		<div class="card__gallery">
-			@Gallery(s.Media)
+		</div>
+		<div class="card__body">
+			<header class="card__header">
+				<h2>{ displayName(s.Species) }</h2>
+				if s.Species.ScientificName != "" {
+					<p class="card__scientific">{ s.Species.ScientificName }</p>
+				}
+			</header>
+			<dl class="card__meta">
+				<dt>Seen</dt>
+				<dd>{ s.HappenedAt.Format("2 January 2006") }</dd>
+				<dt>Where</dt>
+				<dd>{ place(s.Location) }</dd>
+				if s.IndividualCount != nil {
+					<dt>Count</dt>
+					<dd>{ individuals(*s.IndividualCount) }</dd>
+				}
+				if s.RecordedBy != "" {
+					<dt>By</dt>
+					<dd>{ s.RecordedBy }</dd>
+				}
+				if s.Weather.Condition.Description != "" {
+					<dt>Weather</dt>
+					<dd>{ weatherLine(s.Weather) }</dd>
+				}
+			</dl>
 		</div>
 	</article>
 }
 
-// displayName prefers the name a reader would recognise, falling back
-// through the taxonomy as GBIF records thin out.
 func displayName(sp species.Species) string {
 	return cmp.Or(sp.VernacularName, sp.CanonicalName, sp.ScientificName, "Unknown species")
 }
 
-// place joins whichever parts of the location GBIF supplied.
 func place(l sighting.Location) string {
 	parts := slices.DeleteFunc(
 		[]string{l.Locality, l.StateProvince, l.Country},
@@ -56,10 +61,22 @@ func place(l sighting.Location) string {
 	return cmp.Or(strings.Join(parts, ", "), "Location unknown")
 }
 
-// individuals renders how many animals were seen in a single sighting.
 func individuals(n int) string {
 	if n == 1 {
 		return "1 individual"
 	}
 	return fmt.Sprintf("%d individuals", n)
+}
+
+func coverPhoto(items []sighting.Media) string {
+	for _, m := range items {
+		if m.Type == "StillImage" && m.URL != "" {
+			return m.URL
+		}
+	}
+	return ""
+}
+
+func weatherLine(w weather.Weather) string {
+	return fmt.Sprintf("%s, %.0f°C", w.Condition.Description, w.Temperature.Actual)
 }

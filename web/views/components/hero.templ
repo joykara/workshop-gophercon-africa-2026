@@ -1,0 +1,62 @@
+package components
+
+import "fmt"
+
+type HeroItem struct {
+	Title    string
+	Latin    string
+	Summary  string
+	PhotoURL string
+	Alt      string
+	Count    int
+	Places   string
+}
+
+templ Hero(items []HeroItem) {
+	if len(items) > 0 {
+		<section id="hero" class="hero" aria-label="Featured sightings">
+			<div class="hero__swiper swiper">
+				<div class="swiper-wrapper">
+					for i, it := range items {
+						<div class="hero__slide swiper-slide">
+							if it.PhotoURL != "" {
+								<img class="hero__photo" src={ templ.URL(it.PhotoURL) } alt={ it.Alt } loading={ heroLoading(i) }/>
+							}
+							<div class="hero__scrim"></div>
+							<div class="hero__content">
+								<div class="hero__content-inner">
+									<span class="hero__eyebrow">Most-sighted</span>
+									<h1 class="hero__title">{ it.Title }</h1>
+									if it.Latin != "" {
+										<p class="hero__latin">{ it.Latin }</p>
+									}
+									<p class="hero__summary">{ it.Summary }</p>
+									<div class="hero__meta">
+										<span><strong>{ fmt.Sprintf("%d", it.Count) }</strong> sightings</span>
+										if it.Places != "" {
+											<span>Seen in <strong>{ it.Places }</strong></span>
+										}
+									</div>
+								</div>
+							</div>
+						</div>
+					}
+				</div>
+				<button type="button" class="hero__nav hero__nav--prev" aria-label="Previous featured animal">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+				</button>
+				<button type="button" class="hero__nav hero__nav--next" aria-label="Next featured animal">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
+				</button>
+				<div class="hero__pagination"></div>
+			</div>
+		</section>
+	}
+}
+
+func heroLoading(i int) string {
+	if i == 0 {
+		return "eager"
+	}
+	return "lazy"
+}

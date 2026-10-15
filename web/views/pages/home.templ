@@ -1,27 +1,133 @@
 package pages
 
 import (
+	"fmt"
+
 	"workshop/internal/domain/sighting"
 	"workshop/web/views/components"
 	"workshop/web/views/layout"
 )
 
 templ Home(sightings []sighting.Sighting) {
+	{{ sum := sighting.Summarise(sightings) }}
+	{{ byYear := sighting.CountByYear(sightings) }}
+	{{ hero := heroItems(sightings, 5) }}
+	{{ animals := topAnimals(sightings, 8) }}
+	{{ countries := topCountries(sightings, 8) }}
 	@layout.Base(layout.BaseProps{
-		Title: "Sightings YFIO",
+		Title:       "Night Sightings — animals, places and weather",
+		Description: "A dark, field-notebook view of animal sightings around the world: the most-seen species, where they appeared, and the conditions that night.",
 	}) {
-		<h1>Sightings</h1>
-		if len(sightings) == 0 {
-			<p>No sightings have been ingested yet.</p>
-		} else {
-			<p>Total: { len(sightings) }</p>
-			<ul class="sightings">
-				for _, s := range sightings {
-					<li>
-						@components.SightingCard(s)
+		@components.Hero(hero)
+
+		<section id="stats" class="section">
+			<div class="container">
+				<header class="section__head">
+					<span class="section__eyebrow">By the numbers</span>
+					<h2>What the night has recorded</h2>
+					if sum.Sightings > 0 {
+						<p class="section__lede">
+							{ fmt.Sprintf("%d sightings across %d species in %d countries, from %d to %d.",
+								sum.Sightings, sum.Species, sum.Countries, sum.Earliest.Year(), sum.Latest.Year()) }
+						</p>
+					}
+				</header>
+				<ul class="stats" role="list">
+					<li class="stat">
+						<p class="stat__label">Sightings</p>
+						<p class="stat__value">{ fmt.Sprintf("%d", sum.Sightings) }</p>
 					</li>
+					<li class="stat">
+						<p class="stat__label">Species</p>
+						<p class="stat__value">{ fmt.Sprintf("%d", sum.Species) }</p>
+					</li>
+					<li class="stat">
+						<p class="stat__label">Countries</p>
+						<p class="stat__value">{ fmt.Sprintf("%d", sum.Countries) }</p>
+					</li>
+					<li class="stat">
+						<p class="stat__label">Photographs</p>
+						<p class="stat__value">{ fmt.Sprintf("%d", sum.Media) }</p>
+					</li>
+					if sum.Individuals > 0 {
+						<li class="stat">
+							<p class="stat__label">Individuals</p>
+							<p class="stat__value">{ fmt.Sprintf("%d", sum.Individuals) }</p>
+						</li>
+					}
+					if sum.Recorders > 0 {
+						<li class="stat">
+							<p class="stat__label">Observers</p>
+							<p class="stat__value">{ fmt.Sprintf("%d", sum.Recorders) }</p>
+						</li>
+					}
+				</ul>
+			</div>
+		</section>
+
+		<section id="charts" class="section section--muted">
+			<div class="container">
+				<header class="section__head">
+					<span class="section__eyebrow">Patterns</span>
+					<h2>Most-seen animals and the places they roam</h2>
+					<p class="section__lede">The leaderboards sum the data behind every slide above. The sparkline follows sightings year by year.</p>
+				</header>
+				<div class="chart-grid">
+					<div class="chart-card">
+						<h3>Top animals</h3>
+						@components.Bars(animals)
+					</div>
+					<div class="chart-card">
+						<h3>Top countries</h3>
+						@components.Bars(countries)
+					</div>
+					<div class="chart-card chart-card--wide">
+						<h3>Sightings per year</h3>
+						<p class="chart-card__hint">{ fmt.Sprintf("%d to %d", sum.Earliest.Year(), sum.Latest.Year()) }</p>
+						@components.Sparkline(byYear, sum)
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section id="map" class="section">
+			<div class="container">
+				<header class="section__head">
+					<span class="section__eyebrow">Where</span>
+					<h2>Every sighting on one map</h2>
+					<p class="section__lede">Markers cluster at low zoom; open one to jump to its record below.</p>
+				</header>
+				@components.Map(components.MapProps{
+					Points:  components.MapPoints(sightings),
+					Cluster: true,
+					Label:   "Where the sightings were",
+					Class:   "map--dark",
+				})
+			</div>
+		</section>
+
+		<section id="sightings" class="section section--muted">
+			<div class="container">
+				<header class="section__head">
+					<span class="section__eyebrow">The record</span>
+					<h2>All sightings</h2>
+					<p class="section__lede">{ fmt.Sprintf("%d entries, most recent first.", len(sightings)) }</p>
+				</header>
+				if len(sightings) == 0 {
+					<div class="empty">
+						<h2>No sightings yet</h2>
+						<p>Run <code>go run . db seed</code> to load the bundled GBIF data.</p>
+					</div>
+				} else {
+					<ul class="sightings" role="list">
+						for _, s := range sightings {
+							<li>
+								@components.SightingCard(s)
+							</li>
+						}
+					</ul>
 				}
-			</ul>
-		}
+			</div>
+		</section>
 	}
 }

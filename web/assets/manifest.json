@@ -1,0 +1,8 @@
+{
+	"name": "Night Sightings",
+	"short_name": "Sightings",
+	"icons": [{ "src": "/assets/images/logo.svg", "sizes": "any", "type": "image/svg+xml" }],
+	"theme_color": "#1A1612",
+	"background_color": "#1A1612",
+	"display": "standalone"
+}
